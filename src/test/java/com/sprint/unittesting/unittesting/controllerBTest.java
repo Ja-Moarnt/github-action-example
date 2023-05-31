@@ -27,7 +27,7 @@ public class controllerBTest {
                 .accept(MediaType.ALL)
                 .contentType(MediaType.ALL))
                 .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.content().string("Hello World! 2"))
+                .andExpect(MockMvcResultMatchers.content().string("Hello World! 2 lsz"))
                 .andDo(MockMvcResultHandlers.print())
                 .andReturn();
     }
