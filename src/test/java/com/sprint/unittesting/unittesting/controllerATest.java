@@ -17,7 +17,7 @@ class controllerATest {
     @Test
     void testHelloWorld() {
 //        var item = restTemplate.getForEntity("http://localhost:8080/", String.class);
-        assertEquals("Hello World!", "Hello World!");
+        assertEquals("Hello World", "Hello World");
     }
     @Test
     void testDummyItem() {
