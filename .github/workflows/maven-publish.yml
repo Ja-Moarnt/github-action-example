@@ -1,57 +1,41 @@
-# This workflow will build a package using Maven and then publish it to GitHub packages when a release is created
-# For more information see: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#apache-maven-with-a-settings-path
+# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
 
-name: Maven Package
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Java CI with Maven
 
 on:
   push:
-  release:
-      types: [created]
-
-  
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
 
 jobs:
-  build:
-
+  develop_build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      checks: write
-
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up JDK 17
-      uses: actions/setup-java@v3
-      with:
-        java-version: '17'
-        distribution: 'zulu'
-        server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
-        settings-path: ${{ github.workspace }} # location for the settings.xml file
+      - name: 拉取最新提交的代码
+        uses: actions/checkout@v3
 
-    - name: Build with Maven
-      run: mvn -B package --file pom.xml
+      - name: 设置jdk
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
 
-    - name: Publish Test Report
-      if: success() || failure()
-      uses: scacap/action-surefire-report@v1
+      - name: 项目打包
+        run: mvn -B package
 
-    - name: Deploy to Server
-      if: success() || failure()
-      uses: easingthemes/ssh-deploy@main
-      env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          ARGS: "-rlgoDzvc -i --delete"
-          SOURCE: "target/"
-          REMOTE_HOST: ${{ secrets.SSH_HOST }}
-          REMOTE_USER: ${{ secrets.SSH_USER }}
-          TARGET: ${{ secrets.WORK_DIR}}
-          EXCLUDE: "/dist/, /node_modules/"
+      - name: 删除旧的jar包以及运行脚本
+        run: sshpass -p ${{secrets.CHAOYUEPASSWORD}} ssh -o StrictHostKeyChecking=no root@${{secrets.CHAOYUEIP}} "cd /root/GitHub_Action && rm -rf ./*"
 
-    - name: executing remote ssh commands using key
-      uses: appleboy/ssh-action@v0.1.10
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USER }}
-        key : ${{ secrets.SSH_PRIVATE_KEY }}
-        script: /root/app/script/start_springboot.sh &
+      - name: 上传jar包和启动脚本到服务器中
+        run: sshpass -p ${{secrets.CHAOYUEPASSWORD}} scp -r -o StrictHostKeyChecking=no ./target/SoftwareTesting-Practice-SpringBootTest-3.jar ./run.sh root@${{secrets.CHAOYUEIP}}:/root/GitHub_Action
+
+      - name: 启动项目
+        run: sshpass -p ${{secrets.CHAOYUEPASSWORD}} ssh -o StrictHostKeyChecking=no root@${{secrets.CHAOYUEIP}} "cd /root/GitHub_Action && chmod +x run.sh && ./run.sh"
