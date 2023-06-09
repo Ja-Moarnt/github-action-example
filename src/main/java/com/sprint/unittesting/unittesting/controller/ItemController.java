@@ -15,7 +15,7 @@ public class ItemController {
 
     @GetMapping("/")
     public String hello(){
-        return "Hello World! 2 lsz" ;
+        return "Hello World! everyone！" ;
     }
 
     @GetMapping("/dummy-item")
